@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet Map Video Player</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+
+body{
+  background: #28231d;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  background-color: #333;
+  margin-top: 5vh;
+}
+
+.left-side, .right-side {
+  flex-grow: 1;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .left-side, .right-side {
+    width: 50%;
+  }
+}
+
+#video-player, #map {
+  width: 100%;
+  height: 300px; /* Adjust height as needed */
+}
+
+#video {
+  width: 100%;
+  height: 100%;
+  background:  rgba(0, 0, 0, 0.8);
+}
+
+#video-input{
+  background: #28231d;
+  color: #f2f2f2;
+  width: -webkit-fill-available;
+  padding: 8px 5px;
+  font-size: initial;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+#controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  margin-top: 30px;
+}
+
+
+
+button {
+  border: none;
+            /* width: -webkit-fill-available; */
+            width: 200px;
+            color: white;
+            background-color:  rgba(0, 0, 0, 0.8);
+            padding: 12px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #171515;
+            color: #666;
+            transition: .5s;
+}
+
+button:before {
+            content: '';
+            background: #d35400;
+            transition: .5s;
+            transform: scale(.9);
+            z-index: -1;
+            }
+
+            button:hover:before {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px #d35400;
+            filter: blur(3px);
+            }
+
+            button:hover {
+            color: #ffa502;
+            box-shadow: 0 0 15px #d35400;
+            text-shadow: 0 0 15px #d35400;
+            }
+
+/* Button tooltip */
+button[data-tooltip] {
+          position: relative;
+        }
+        
+        button[data-tooltip]::before {
+          content: attr(data-tooltip);
+          position: absolute;
+          top: -30px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 14px;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.2s, visibility 0.2s;
+        }
+        
+        button[data-tooltip]:hover::before {
+          opacity: 1;
+          visibility: visible;
+        }
+        
+        
+        /* Range input tooltip */
+        input[type="range"][data-tooltip] {
+          position: relative;
+        }
+        
+        input[type="range"][data-tooltip]::before {
+          content: attr(data-tooltip);
+          position: absolute;
+          top: -30px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 14px;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.2s, visibility 0.2s;
+        }
+        
+        input[type="range"][data-tooltip]:hover::before {
+          opacity: 1;
+          visibility: visible;
+        }
+
+
+
+        #controls #loop-control.loop-on i.fa-circle-o-notch {
+          animation: spin 2s linear infinite; /* Add animation for "On" state */
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        #controls {
+          font-size: 18px;
+        }
+        
+        #controls #timer {
+          margin-left: 10px;
+        }
+        
+        
+        /*Restart btn*/
+        @keyframes rotate360 {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+        
+        #restart-control.clicked i {
+          animation: rotate360 0.5s linear;
+        }
+
+
+
+#map {
+  background-color: #ffffff; /* add white background color */
+  background-image: url('https://static.vecteezy.com/system/resources/previews/001/265/731/original/map-with-location-pin-vector.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+  box-sizing: border-box;
+}
+
+#myTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#myTable td {
+  border: 1px solid #222;
+  padding: 8px;
+  text-align: center;
+  background:  rgba(0, 0, 0, 0.8);
+  color: #fff;
+  
+}
+
+#myTable tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+#file-input {
+  /* width: 100%; */
+  background: #28231d;
+  color: #f2f2f2;
+  width: -webkit-fill-available;
+  padding: 8px 5px;
+  font-size: initial;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .left-side, .right-side {
+    width: 100%;
+  }
+
+  #map {
+    height: 300px; /* Adjust height for smaller screens */
+  }
+
+  #controls button {
+    font-size: 16px;
+  }
+
+
+  #controls {
+    flex-wrap: wrap; /* Allow flex items to wrap */
+  }
+
+  #pause-play,
+  #fast-backward-control,
+  #fast-forward-control {
+    flex-basis: calc(33.33% - 10px); /* Set width for first three buttons */
+    margin-bottom: 10px; /* Add margin between buttons */
+  }
+
+  #snapshot-btn,
+  #loop-control,
+  #restart-control {
+    flex-basis: calc(33.33% - 10px); /* Set width for last three buttons */
+  }
+}
+
+
+
+            .neon {border: none;
+            color: white;background-color:  rgba(0, 0, 0, 0.8);padding: 10px 12px;text-align: center;
+            text-decoration: none;display: inline-block;font-size: 16px;border-radius: 100%;font-weight: bold;
+            cursor: pointer;background: #171515;color: #666; transition: .5s;}
+            .neon:before {content: '';background: #d35400;transition: .5s;transform: scale(.9);z-index: -1;}
+            .neon:hover:before {transform: scale(1.2);box-shadow: 0 0 15px #d35400;filter: blur(3px);}
+            .neon:hover {color: #ffa502;box-shadow: 0 0 15px #d35400;text-shadow: 0 0 15px #d35400;}
+
+
+	</style>
+</head>
+    
+
+    <div class="neon"  id="back-btn">
+      <i class="fa fa-arrow-circle-o-left" style="font-size: 50px;"></i>
+    </div>
+    
+    <div class="container">
+
+      <div class="left-side">
+
+        <div id="video-player">
+            <video id="video" controls>
+              <source src="default1.mp4" type="video/mp4">
+            </video>
+        </div>
+        <div>
+          <input type="file" id="video-input">
+        </div>
+        <div id="controls">
+          <input style="display:none" type="range" id="speed-control" data-tooltip="Speed Control" min="0.5" max="2" step="0.1" value="1">
+          <button id="pause-play"              data-tooltip="pause"><i class="fa fa-pause"></i></button>
+          <button id="fast-backward-control"   data-tooltip="Backward: 10 sec"><i class="fa fa-fast-backward"></i></button>
+          <button id="fast-forward-control"    data-tooltip="Forward: 10 sec"><i class="fa fa-fast-forward"></i></button>
+          <button id="snapshot-btn"            data-tooltip="Take a Snapshot"><i class="fa fa-camera" aria-hidden="true"></i></button>
+          <button id="loop-control"            data-tooltip="Loop" class="loop-off" ><i id="loop-icon" class="fa fa-circle-o-notch" aria-hidden="true"></i></button>
+          <button id="restart-control"         data-tooltip="Restart Video"><i class="fa fa-refresh"></i></button>
+        </div>
+
+        
+      </div> <!-- left-side end -->
+
+
+      <div class="right-side">
+        <div id="map"></div>
+        <div>
+          <input type="file" id="file-input">
+        </div>
+
+        <div>
+          <br>
+          <table id="myTable">
+            <tr>
+              <td style="text-align: center">Distance</td>
+              <td style="text-align: center">Duration</td>
+            </tr>
+            <tr>
+              <td style="text-align: center"></td>
+              <td style="text-align: center"><div id="timer"></div></td>
+            </tr>
+          </table>
+        </div>
+
+      </div> <!-- right-side end -->
+      
+      
+    </div> <!-- container-end -->
+    
+    
+
+
+    
+    
+        
+    
+
+
+	<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script>
+
+    const videoInput = document.getElementById('video-input');
+    const videoElement = document.getElementById('video');
+
+    let back_btn = document.getElementById('back-btn');
+
+    back_btn.addEventListener('click', function(e) {
+            window.location.href = 'index.html';
+    });
+
+
+  // Handle file input change
+  videoInput.addEventListener('change', function() {
+    const file = videoInput.files[0];
+    const fileURL = URL.createObjectURL(file);
+    videoElement.src = fileURL;
+  });
+  
+
+  // Add event listeners for video controls
+  videoElement.addEventListener('loadedmetadata', function() {
+    // Set initial values
+    videoElement.volume = 1; // Full volume (1.0)
+    videoElement.playbackRate = 1; // Normal speed (1.0)
+
+    // Set up controls
+    // const volumeControl = document.getElementById('volume-control');
+    const speedControl = document.getElementById('speed-control');
+    const fastBackwardControl = document.getElementById('fast-backward-control');
+    const fastForwardControl = document.getElementById('fast-forward-control');
+    // const qualityControl = document.getElementById('quality-control');
+    // Loop control
+    const loopControl = document.getElementById('loop-control');
+    const loopIcon = document.getElementById('loop-icon');
+    const restartControl = document.getElementById('restart-control');
+    const timerElement = document.getElementById('timer');
+    const pausePlayBtn = document.getElementById('pause-play');
+
+    // Volume control
+    // volumeControl.addEventListener('input', function() {
+    //   videoElement.volume = volumeControl.value;
+    // });
+
+    // Speed control
+    speedControl.addEventListener('input', function() {
+      videoElement.playbackRate = speedControl.value;
+    });
+
+    // Fast forward control
+    fastForwardControl.addEventListener('click', function() {
+      videoElement.currentTime += 10; // Fast forward by 10 seconds
+    });
+    
+    fastBackwardControl.addEventListener('click', function() {
+      videoElement.currentTime -= 10; // Fast forward by 10 seconds
+    });
+
+    // Add click event listener to the pause/play button
+    pausePlayBtn.addEventListener('click', function() {
+      if (videoElement.paused) {
+        videoElement.play(); // If video is paused, play it
+        pausePlayBtn.innerHTML = '<i class="fa fa-pause"></i>'; // Change button icon to pause
+        pausePlayBtn.dataset.tooltip = 'Pause'; // Update tooltip text
+      } else {
+        videoElement.pause(); // If video is playing, pause it
+        pausePlayBtn.innerHTML = '<i class="fa fa-play"></i>'; // Change button icon to play
+        pausePlayBtn.dataset.tooltip = 'Play'; // Update tooltip text
+      }
+    });
+
+    // Quality control
+    // qualityControl.addEventListener('change', function() {
+    //   const selectedQuality = qualityControl.value;
+    //   const videoWidth = selectedQuality * 16 / 9; // Calculate width based on 16:9 aspect ratio
+    //   const videoHeight = selectedQuality;
+    //   videoElement.width = videoWidth;
+    //   videoElement.height = videoHeight;
+    // });
+    
+    // Get the canvas element
+      var canvas = document.createElement("canvas");
+      var ctx = canvas.getContext("2d");
+    
+      // Set the canvas dimensions to match the video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    
+      // Function to capture and save the snapshot
+      function captureSnapshot() {
+        // Draw the current frame of the video on the canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+        // Convert the canvas image to a data URL
+        var dataURL = canvas.toDataURL("image/png");
+    
+        // Create a link element to download the image
+        var link = document.createElement("a");
+        link.href = dataURL;
+        link.download = "snapshot.png";
+    
+        // Programmatically trigger the download
+        link.click();
+      }
+    
+      // Add click event listener to the snapshot button
+      var snapshotBtn = document.getElementById("snapshot-btn");
+      snapshotBtn.addEventListener("click", captureSnapshot);
+
+    
+    
+    
+
+    // Loop control
+    // loopControl.addEventListener('change', function() {
+    //   videoElement.loop = loopControl.checked;
+    // });
+    
+
+    let loopEnabled = false;
+
+function setLoop() {
+  if (loopEnabled) {
+    videoElement.loop = true; // Enable looping in the video element
+    loopControl.classList.remove('loop-off');
+    loopControl.classList.add('loop-on');
+    loopIcon.classList.remove('fa-cog');
+    loopIcon.classList.add('fa-stop-circle');
+  } else {
+    videoElement.loop = false; // Disable looping in the video element
+    loopControl.classList.remove('loop-on');
+    loopControl.classList.add('loop-off');
+    loopIcon.classList.remove('fa-stop-circle');
+    loopIcon.classList.add('fa-cog');
+  }
+}
+
+loopControl.addEventListener('click', function() {
+  loopEnabled = !loopEnabled;
+  setLoop();
+});
+
+// Event listener for file input change
+videoInput.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  const videoURL = URL.createObjectURL(file);
+  videoElement.src = videoURL;
+  
+  // Reset loopEnabled when a new video is loaded
+  loopEnabled = false;
+  setLoop();
+});
+
+
+    // Restart control
+
+    
+    restartControl.addEventListener('click', function() {
+      videoElement.currentTime = 0;
+      videoElement.play();
+      this.classList.add('clicked');
+      setTimeout(() => {
+        this.classList.remove('clicked');
+      }, 400);
+    });
+        
+
+    // Update timer
+    videoElement.addEventListener('timeupdate', function() {
+      const currentTime = videoElement.currentTime;
+      const duration = videoElement.duration;
+      const currentTimeFormatted = formatTime(currentTime);
+      const durationFormatted = formatTime(duration);
+      timerElement.textContent = currentTimeFormatted + ' / ' + durationFormatted;
+    });
+    
+      // Helper function to format time in HH:MM:SS format
+    function formatTime(time) {
+        const hours = Math.floor(time / 3600);
+        const minutes = Math.floor((time % 3600) / 60);
+        const seconds = Math.floor(time % 60);
+        return (
+          (hours > 0 ? hours + ':' : '') +
+          (minutes < 10 ? '0' + minutes : minutes) +
+          ':' +
+          (seconds < 10 ? '0' + seconds : seconds)
+        );
+    }
+});
+
+
+    
+
+        
+        
+        
+        
+        
+        // get the table element by its id
+        const table = document.getElementById("myTable");
+    
+        // Get a reference to the Json-file input element
+        const fileInput = document.getElementById('file-input');
+        
+        // Add an event listener to the file input element
+        fileInput.addEventListener('change', (event) => {
+            // Get the selected file
+            const file = event.target.files[0];
+        
+            // Create a new file reader
+            const reader = new FileReader();
+        
+            // Add an event listener to the reader
+            reader.addEventListener('load', () => {
+                // Parse the JSON data
+                const data = JSON.parse(reader.result);
+                
+                const pathCoordinates = data.locations.map(location => [location.lat, location.lng]);
+                // Use pathCoordinates array for your task
+                
+                
+                // Define your video timestamps here
+                var videoTimestamps = data.locations.map(location => location.index);
+        	
+        		var map = L.map('map').setView([pathCoordinates[0][0], pathCoordinates[0][1]], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+                		maxZoom: 18,
+                }).addTo(map);
+                
+                
+                            
+              /* Control panel to display map layers */
+              var controlLayers = L.control.layers( null, null, {
+                position: "topright",
+                collapsed: false
+              }).addTo(map);
+            
+              // display Carto basemap tiles with light features and labels
+              var light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+              }).addTo(map); // EDIT - insert or remove ".addTo(map)" before last semicolon to display by default
+              controlLayers.addBaseLayer(light, 'Carto Light map');
+            
+              //OpenStreet map
+              var streetmap = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              }).addTo(map);
+              controlLayers.addBaseLayer(streetmap, 'Open Street map');
+            
+                //Google map
+                var googlemap = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                //attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                subdomains:['mt0','mt1','mt2','mt3']
+              }).addTo(map);
+              controlLayers.addBaseLayer(googlemap, 'Google map');
+              
+              console.log(pathCoordinates);
+                
+        
+        		var path = L.polyline(pathCoordinates, {
+                    color: 'red', 
+                    simplify: true,
+                    weight: 10,
+                    smoothFactor: 1
+                }).addTo(map);
+
+                
+        		var marker = L.marker([pathCoordinates[0][0], pathCoordinates[0][1]]).addTo(map);
+
+            
+            
+            // Function to animate marker movement
+            function animateMarkerTo(coordinate, duration) {
+            var startLatLng = marker.getLatLng();
+            var startTime = performance.now();
+
+            function animateFrame(currentTime) {
+                var elapsedTime = currentTime - startTime;
+                var progress = Math.min(elapsedTime / duration, 1); // Ensure progress doesn't exceed 1
+                var interpolatedLatLng = L.latLng(
+                    startLatLng.lat + (coordinate[0] - startLatLng.lat) * progress,
+                    startLatLng.lng + (coordinate[1] - startLatLng.lng) * progress
+                );
+                marker.setLatLng(interpolatedLatLng);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateFrame);
+                }
+            }
+
+            requestAnimationFrame(animateFrame);
+        }
+
+        		
+        		// Set the view of the map to fit the bounds of the polygon
+                map.fitBounds(path.getBounds());
+                
+                let totalDistance = 0;    
+                
+                function calculateDistance(lat1, lon1, lat2, lon2) {
+                    const earthRadius = 6371; // km
+                    const dLat = (lat2 - lat1) * Math.PI / 180;
+                    const dLon = (lon2 - lon1) * Math.PI / 180;
+                    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    const distance = earthRadius * c;
+                    return distance;
+                }
+                
+                function calculatePathDistance(pathCoordinates) {
+                   
+                    for (let i = 0; i < pathCoordinates.length - 1; i++) {
+                        const lat1 = pathCoordinates[i][0];
+                        const lon1 = pathCoordinates[i][1];
+                        const lat2 = pathCoordinates[i+1][0];
+                        const lon2 = pathCoordinates[i+1][1];
+                        const distance = calculateDistance(lat1, lon1, lat2, lon2);
+                        totalDistance += distance;
+                        
+
+                    }
+                    console.log(totalDistance);
+                    
+ 
+                    // get the second row (index 1) of the table
+                    const row = table.rows[1];
+                    
+                    // get the first cell (index 0) of the row
+                    const DistanceCell = row.cells[0];
+                    
+                    // set the new value of the cell
+                    DistanceCell.textContent = totalDistance.toFixed(3) + " Km";
+                    
+                    
+                }
+                
+                
+
+                // call the function to calculate distance and log it to console.
+                calculatePathDistance(pathCoordinates); 
+                
+                
+                // Add event listener for video timestamp links
+                var timestampLinks = document.querySelectorAll('.timestamp-link');
+                timestampLinks.forEach(function(link) {
+                	link.addEventListener('click', function(e) {
+                		e.preventDefault();
+                		var timestamp = parseInt(e.target.dataset.timestamp);
+                		video.currentTime = timestamp;
+                		var index = videoTimestamps.indexOf(timestamp);
+                		var coordinate = pathCoordinates[index];
+                		marker.setLatLng(coordinate);
+                       //map.panTo(coordinate);
+                	});
+                });
+        
+                // Add event listener for video time update
+                var video = document.getElementById('video');
+                video.addEventListener('timeupdate', function() {
+                	var currentTime = Math.floor(video.currentTime);
+                	if (videoTimestamps.includes(currentTime)) {
+                		var index = videoTimestamps.indexOf(currentTime);
+                		var coordinate = pathCoordinates[index];
+                		// marker.setLatLng(coordinate);
+                      //map.panTo(coordinate);
+                      animateMarkerTo(coordinate, 1000);
+                	}
+                });
+                
+                        
+                // When the path is clicked, start playing the video from the corresponding timestamp
+                path.on('click', function(e) {
+                	// Determine which timestamp corresponds to the clicked path
+                	var clickedLatLng = e.latlng;
+                	var closestIndex = getClosestIndex(pathCoordinates, clickedLatLng);
+                	var timestamp = videoTimestamps[closestIndex];
+                
+                	// Load the video and start playing at the timestamp
+                	var video = document.getElementById('video');
+                	video.currentTime = timestamp;
+                	video.play();
+                
+                	// Move the marker along the path to the clicked location
+                	marker.setLatLng(clickedLatLng);
+                
+                	// If the clicked location is at the end of the path, stop the interval
+                	if (closestIndex == pathCoordinates.length - 1){
+                		clearInterval(interval);
+                	}
+                });
+                
+                
+                // Handle click events on the video timestamps
+                var timestampLinks = document.querySelectorAll('.timestamp-link');
+                for (var i = 0; i < timestampLinks.length; i++) {
+                    timestampLinks[i].addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var timestamp = this.dataset.timestamp;
+                        
+                        // Set the video time and move the marker to the corresponding path location
+                        video.currentTime = timestamp;
+                        var closestIndex = getClosestIndex(videoTimestamps, timestamp);
+                        var nextLatLng = L.latLng(pathCoordinates[closestIndex]);
+                        marker.setLatLng(nextLatLng);
+                        // map.panTo(nextLatLng);
+                    });
+                }
+        
+            	// Helper function to find the index of the closest path coordinate to a clicked point
+            	function getClosestIndex(coordinates, clickedValue) {
+            		var closestIndex = 0;
+            		var closestDistance = Number.MAX_VALUE;
+            		for (var i = 0; i < coordinates.length; i++) {
+            			var distance = L.latLng(coordinates[i]).distanceTo(clickedValue);
+            			if (distance < closestDistance) {
+            				closestIndex = i;
+            				closestDistance = distance;
+            			}
+            		}
+            		return closestIndex;
+            	}
+        	
+            }); // impt
+        
+            // Read the contents of the selected file
+            reader.readAsText(file);
+        }); // impt
+        
+        
+
+
+        
+
+</script>
+
+	
+
+</body>
+</html>
+	
